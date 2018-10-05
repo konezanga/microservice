@@ -96,7 +96,7 @@ public class ProductController {
 		return productDao.chercherUnProduitCher(400);
 	}
 
-	//calcul de la marge
+	// calcul de la marge
 	@GetMapping("/AdminProduits")
 	public HashMap<Product, Integer> calculerMargeProduit() {
 		HashMap<Product, Integer> margeDesProduits = new HashMap<>();
@@ -108,5 +108,9 @@ public class ProductController {
 		return margeDesProduits;
 	}
 
+	@GetMapping("/ordreAlphabetique")
+	public List<Product> trierProduitsParOrdreAlphabetique() {
+		return productDao.findAllByOrderByNomAsc();
+	}
 
 }

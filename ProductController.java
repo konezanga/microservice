@@ -2,6 +2,7 @@ package com.ecommerce.microcommerce.web.controller;
 
 import com.ecommerce.microcommerce.dao.ProductDao;
 import com.ecommerce.microcommerce.model.Product;
+import com.ecommerce.microcommerce.web.exceptions.ProduitGratuitException;
 import com.ecommerce.microcommerce.web.exceptions.ProduitIntrouvableException;
 import com.fasterxml.jackson.databind.ser.FilterProvider;
 import com.fasterxml.jackson.databind.ser.impl.SimpleBeanPropertyFilter;
@@ -16,6 +17,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import javax.validation.Valid;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -34,7 +36,7 @@ public class ProductController {
 	public MappingJacksonValue listeProduits() {
 
 		List<Product> produits = productDao.findAll();
-
+		validationDuPrixDeVente2(produits);
 		SimpleBeanPropertyFilter monFiltre = SimpleBeanPropertyFilter.serializeAllExcept("prixAchat");
 
 		FilterProvider listDeNosFiltres = new SimpleFilterProvider().addFilter("monFiltreDynamique", monFiltre);
@@ -53,7 +55,9 @@ public class ProductController {
 	public Product afficherUnProduit(@PathVariable int id) {
 
 		Product produit = productDao.findById(id);
-
+		List<Product> liste = new ArrayList<Product>();
+		liste.add(produit);
+		validationDuPrixDeVente2(liste);
 		if (produit == null)
 			throw new ProduitIntrouvableException(
 					"Le produit avec l'id " + id + " est INTROUVABLE. Écran Bleu si je pouvais.");
@@ -66,6 +70,9 @@ public class ProductController {
 
 	public ResponseEntity<Void> ajouterProduit(@Valid @RequestBody Product product) {
 
+		List<Product> liste = new ArrayList<Product>();
+		liste.add(product);
+		validationDuPrixDeVente2(liste);
 		Product productAdded = productDao.save(product);
 
 		if (productAdded == null)
@@ -85,7 +92,9 @@ public class ProductController {
 
 	@PutMapping(value = "/Produits")
 	public void updateProduit(@RequestBody Product product) {
-
+		List<Product> liste = new ArrayList<Product>();
+		liste.add(product);
+		validationDuPrixDeVente2(liste);
 		productDao.save(product);
 	}
 
@@ -96,11 +105,12 @@ public class ProductController {
 		return productDao.chercherUnProduitCher(400);
 	}
 
-	// calcul de la marge
 	@GetMapping("/AdminProduits")
 	public HashMap<Product, Integer> calculerMargeProduit() {
 		HashMap<Product, Integer> margeDesProduits = new HashMap<>();
+
 		List<Product> listProduits = productDao.findAll();
+		validationDuPrixDeVente2(listProduits);
 		for (Product p : listProduits) {
 			margeDesProduits.put(p, p.getPrix() - p.getPrixAchat());
 		}
@@ -110,7 +120,22 @@ public class ProductController {
 
 	@GetMapping("/ordreAlphabetique")
 	public List<Product> trierProduitsParOrdreAlphabetique() {
+		List<Product> listeProduits = productDao.findAllByOrderByNomAsc();
+		validationDuPrixDeVente2(listeProduits);
 		return productDao.findAllByOrderByNomAsc();
+	}
+
+	private void validationDuPrixDeVente2(List<Product> produits) {
+		for(Product p : produits) {
+			validationDuPrixDeVente1(p);
+		}
+
+	}
+
+	private void validationDuPrixDeVente1(Product product) {
+		if (product.getPrix() == 0) {
+			throw new ProduitGratuitException("Le produit " + product.getNom() + " ne doit pas avoir un prix egale a zero");
+		}
 	}
 
 }

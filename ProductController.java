@@ -105,6 +105,9 @@ public class ProductController {
 		return productDao.chercherUnProduitCher(400);
 	}
 
+	/*
+	Calcul de la marge
+	*/
 	@GetMapping("/AdminProduits")
 	public HashMap<Product, Integer> calculerMargeProduit() {
 		HashMap<Product, Integer> margeDesProduits = new HashMap<>();
